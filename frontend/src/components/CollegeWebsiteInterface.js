@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
+import axios from 'axios';
 import { MessageCircle } from 'lucide-react';
 import './CollegeWebsiteInterface.css';
 
 const CollegeWebsiteInterface = () => {
-    const [showChat, setShowChat] = useState(false);
+    const [showChat, setShowChat] = useState(false);////
     const [activePage, setActivePage] = useState('dashboard');
     const [messages, setMessages] = useState([
         { text: "Hello! How can I assist you today?", sender: 'bot' }
@@ -17,16 +18,30 @@ const CollegeWebsiteInterface = () => {
 
     useEffect(scrollToBottom, [messages]);
 
-    const handleSendMessage = (e) => {
+    const handleSendMessage = async (e) => {
         e.preventDefault();
         if (inputMessage.trim() === '') return;
 
+        // Add the user message to the chat
         setMessages([...messages, { text: inputMessage, sender: 'user' }]);
+        const userQuery = inputMessage;
         setInputMessage('');
 
-        setTimeout(() => {
-            setMessages(prev => [...prev, { text: "Thank you for your message. I'm processing your request.", sender: 'bot' }]);
-        }, 1000);
+        // Send the user query to the backend
+        try {
+            const response = await axios.post(
+                'https://fb1f-2405-201-c038-2826-7dba-65e2-f42f-c9b6.ngrok-free.app/rag', // Replace with your ngrok public URL
+                { query: userQuery }
+            );
+
+            const botResponse = response.data.response;
+
+            // Update the chat with the bot's response
+            setMessages((prev) => [...prev, { text: botResponse, sender: 'bot' }]);
+        } catch (error) {
+            console.error("Error communicating with the backend:", error);
+            setMessages((prev) => [...prev, { text: "Sorry, something went wrong. Please try again.", sender: 'bot' }]);
+        }
     };
 
     const renderContent = () => {
@@ -39,19 +54,6 @@ const CollegeWebsiteInterface = () => {
                             <h3 className="h5">Welcome To Keshav Memorial Institute of Technology</h3>
                             <p>KESHAV MEMORIAL INSTITUTE OF TECHNOLOGY (KMIT), established in 2007...</p>
                         </div>
-                        <div className="card mb-4 p-3">
-                            <h3 className="h5">Why KMIT?</h3>
-                            <p>KMIT has carved a niche for itself by focusing on providing holistic education...</p>
-                        </div>
-                        <div className="card mb-4 p-3">
-                            <h3 className="h5">Quick Links</h3>
-                            <div className="d-flex flex-wrap">
-                                <a href="#" className="text-primary me-3">Student Portal</a>
-                                <a href="#" className="text-primary me-3">Course Catalog</a>
-                                <a href="#" className="text-primary me-3">Library Resources</a>
-                                <a href="#" className="text-primary">Career Services</a>
-                            </div>
-                        </div>
                     </div>
                 );
             case 'about':
@@ -59,10 +61,6 @@ const CollegeWebsiteInterface = () => {
                     <div className="container">
                         <h2 className="display-6 mb-4">About KMIT</h2>
                         <p>Keshav Memorial Institute of Technology (KMIT) is a premier engineering college...</p>
-                        <ul>
-                            <li>AICTE approved and NAAC accredited institution</li>
-                            <li>Offers B.Tech programs in various engineering disciplines</li>
-                        </ul>
                     </div>
                 );
             case 'events':
@@ -72,10 +70,6 @@ const CollegeWebsiteInterface = () => {
                         <div className="card mb-3 p-3">
                             <h3 className="h5">Synergy 2024</h3>
                             <p>Date: March 15-17, 2024...</p>
-                        </div>
-                        <div className="card mb-3 p-3">
-                            <h3 className="h5">Tech Symposium</h3>
-                            <p>Date: April 5, 2024...</p>
                         </div>
                     </div>
                 );
